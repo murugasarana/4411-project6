@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "minithread.h"
+#include "disk.h"
+#include "minifile.h"
 #include "queue.h"
 #include "interrupts.h"
 #include "synch.h"
@@ -151,6 +153,13 @@ network_handler(void *arg) {
             set_interrupt_level(level);
         }
     }
+}
+
+void disk_handler(void* arg) {
+    disk_interrupt_arg_t* disk_interrupt;
+    
+    disk_interrupt = (disk_interrupt_arg_t*)arg;
+    printf("\nI don't do anything. You should know a disk interrupt happened");
 }
 
 /* minithread functions */
@@ -302,6 +311,13 @@ void
 minithread_system_initialize(proc_t mainproc, arg_t mainarg) {
 	minithread_t main_thread, idle_thread;
     network_address_t addr;
+    disk_t* disk;
+    
+    disk = (disk_t*) malloc(sizeof(disk_t));
+    if(disk == NULL) {
+        fprintf(stderr, "OUT OF MEMORY");
+        exit(-1);
+    }
     
     idle_thread = (minithread_t) malloc(sizeof(struct minithread));
 	idle_thread -> thread_id = 0;
@@ -325,7 +341,7 @@ minithread_system_initialize(proc_t mainproc, arg_t mainarg) {
     alarm_sema = semaphore_create();
     
     minimsg_initialize();
-	
+	printf("Disk creation status: %d\n", disk_initialize(disk));
 
 	//create global system threads
     main_thread = minithread_create(mainproc, mainarg);
@@ -335,8 +351,9 @@ minithread_system_initialize(proc_t mainproc, arg_t mainarg) {
     active_thread = main_thread;
     
     minithread_clock_init(&clock_handler);
-	network_initialize(&network_handler);
-	miniroute_initialize();
+	//network_initialize(&network_handler);
+    install_disk_handler(&disk_handler);
+	//miniroute_initialize();
 	
     minithread_switch(&(idle_thread -> stacktop), &(main_thread -> stacktop));
     
