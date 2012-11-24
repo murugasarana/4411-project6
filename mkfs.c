@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "disk.h"
 #include "minithread.h"
+#include "file-structures.h"
 
 int disk_init(int* arg) {
     //TODO initialize filesystem
